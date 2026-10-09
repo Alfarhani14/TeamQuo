@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Questionnaire</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mu:#6b6b66;--ac:#2f5d50;--bd:#dcdad2}
+@media(prefers-color-scheme:dark){:root{--bg:#161715;--card:#1f211e;--tx:#ecebe6;--mu:#9a9a92;--ac:#6fb59f;--bd:#33362f}}
+*{box-sizing:border-box}
+body{margin:0;font:17px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex;justify-content:center;padding:24px 14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:26px;max-width:620px;width:100%}
+h1{font-size:1.4rem;margin:0 0 8px}p{color:var(--mu);margin:0 0 18px}
+input{width:100%;padding:12px;font-size:1rem;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);margin-bottom:14px}
+button{font:inherit;cursor:pointer}
+.main{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:12px 22px}
+.main:disabled{opacity:.35;cursor:default}
+.opt{display:block;width:100%;text-align:left;background:var(--bg);color:var(--tx);border:1.5px solid var(--bd);border-radius:10px;padding:13px 15px;margin-bottom:10px}
+.opt.sel{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,var(--bg))}
+.bar{height:6px;background:var(--bd);border-radius:3px;margin-bottom:18px}
+.bar div{height:100%;background:var(--ac);border-radius:3px;transition:width .3s}
+.cnt{font-size:.85rem;color:var(--mu);margin-bottom:6px}
+h2{font-size:1.15rem;margin:0 0 16px}
+</style></head><body><div class="card" id="app"></div>
+<script>
+// [trait, question, [[answer, value], ...]]  E,A,C,N,O scored 1-5; M = motivation (A/P/F)
+const Q=[
+["E","After a long, demanding day, what recharges you most?",[["An evening out with a group of people",5],["A bit of company, then some quiet time",3],["Time alone in a quiet place",1]]],
+["E","When a problem is raised in a meeting, you usually…",[["Think out loud and work it out as I speak",5],["Say a little, then keep thinking",3],["Stay quiet until I have thought it through fully",1]]],
+["E","After a long social event, you typically feel…",[["Energised and ready for more",5],["Fine at first, but worn out later",3],["Drained and in need of being alone",1]]],
+["E","Where do you prefer to share your ideas?",[["In a large, open group discussion",5],["In a small group, depending on the day",3],["Privately, one to one",1]]],
+["A","A teammate's plan has a flaw. You…",[["Say it directly, even if it feels awkward",1],["Raise it gently if I trust the person",3],["Keep it to myself to avoid tension",5]]],
+["A","Someone presents a new proposal. Your first reaction is to…",[["Look for what could go wrong",1],["Weigh both the risks and the benefits",3],["Focus on what could go well",5]]],
+["A","When there is disagreement in the team, you…",[["Avoid it and go along with the group",5],["Step in only if it matters",3],["Am comfortable arguing my side openly",1]]],
+["A","A teammate criticises your work. You feel…",[["That it may damage our connection",5],["Mostly that it is useful feedback",3],["That it is normal, good work comes from challenge",1]]],
+["C","How do you handle your daily work?",[["Follow a consistent routine and schedule",5],["Keep a loose plan",3],["Go with the flow",1]]],
+["C","When a deadline is set, you usually…",[["Finish well before it",5],["Finish close to it",3],["Work when the mood or inspiration arrives",1]]],
+["C","When things become disorganised around you…",[["I feel uneasy until order is back",5],["I notice it but cope",3],["It does not bother me",1]]],
+["C","When others rely on you for a task…",[["I always deliver exactly as promised",5],["I usually deliver as promised",3],["I sometimes need a reminder to stay on track",1]]],
+["N","Before an important task, you…",[["Worry a lot about what could go wrong",5],["Feel a little nervous",3],["Stay calm",1]]],
+["N","When an unexpected problem appears, you…",[["Feel anxious or afraid",5],["Feel concerned but handle it",3],["Stay cool and collected",1]]],
+["N","While waiting for an important result, you…",[["Keep thinking about it constantly",5],["Think about it from time to time",3],["Hardly give it a thought",1]]],
+["N","Small concerns in your mind…",[["Stay with me and tend to grow",5],["Bother me briefly",3],["Pass quickly",1]]],
+["O","A new method is proposed in the middle of a project. You…",[["Are excited to try it",5],["Am open if it is well justified",3],["Prefer to stay with the current way",1]]],
+["O","In a brainstorming session, you…",[["Love generating lots of ideas",5],["Contribute a few ideas",3],["Prefer to wait for a decided plan",1]]],
+["O","When the plan changes, you feel…",[["Energised",5],["Fine with small adjustments",3],["Uncomfortable and unsettled",1]]],
+["O","If a discussion on innovation is needed, you would…",[["Be happy to lead it",5],["Join in",3],["Prefer someone else lead it",1]]],
+["M","What would satisfy you most after a project?",[["Knowing we won and reached the goal","A"],["Having influenced the decisions","P"],["Having built good connections with my teammates","F"]]],
+["M","Which would bother you most?",[["Failing","A"],["Being overlooked with no say","P"],["Feeling disconnected from the team","F"]]],
+["M","In a team discussion, what do you want most?",[["To show my best and compete","A"],["Time and space to speak and be heard","P"],["For everyone to connect and work well together","F"]]],
+["M","What makes you put in extra effort?",[["A chance to win","A"],["Prestige and influence","P"],["Working closely with people","F"]]]
+];
+const sh=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const app=document.getElementById('app');let name='',qs=[],i=0,ans=[],pick=null;
+function start(){app.innerHTML=`<h1>Team Questionnaire</h1><p>Please enter your name, then answer each question by choosing the option that describes you best. There are no right or wrong answers.</p><input id="n" placeholder="Your name"><button class="main" id="go">Start</button>`;
+document.getElementById('go').onclick=()=>{name=document.getElementById('n').value.trim();if(!name){document.getElementById('n').focus();return}qs=sh(Q).map(q=>[q[0],q[1],sh(q[2])]);show()}}
+function show(){pick=null;const q=qs[i];
+app.innerHTML=`<div class="cnt">Question ${i+1} of ${qs.length}</div><div class="bar"><div style="width:${i/qs.length*100}%"></div></div><h2>${q[1]}</h2>`+q[2].map((o,k)=>`<button class="opt" data-k="${k}">${o[0]}</button>`).join('')+`<button class="main" id="nx" disabled>${i==qs.length-1?'Finish':'Next'}</button>`;
+app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{app.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');pick=+b.dataset.k;document.getElementById('nx').disabled=false});
+document.getElementById('nx').onclick=()=>{const o=q[2][pick];ans.push({t:q[0],q:q[1],a:o[0],v:o[1]});i++;i<qs.length?show():finish()}}
+function finish(){app.innerHTML=`<h1>Thank you, ${name.replace(/</g,'&lt;')}!</h1><p>You have finished. Please download your results and send the file to the team leader.</p><button class="main" id="dl">Download results</button>`;
+document.getElementById('dl').onclick=download}
+function download(){
+const avg=t=>{const a=ans.filter(x=>x.t==t);return +(a.reduce((s,x)=>s+x.v,0)/a.length).toFixed(1)};
+const m={A:0,P:0,F:0};ans.filter(x=>x.t=='M').forEach(x=>m[x.v]++);
+const o={name:name,date:new Date().toISOString().slice(0,10),scores:{E:avg('E'),A:avg('A'),C:avg('C'),N:avg('N'),O:avg('O')},motivation:m,answers:ans};
+// Obfuscation: JSON -> UTF-8 -> XOR with key -> base64
+const k="tq-2026-mo",b=new TextEncoder().encode(JSON.stringify(o)),x=b.map((v,n)=>v^k.charCodeAt(n%k.length));
+let bin='';x.forEach(v=>bin+=String.fromCharCode(v));
+const enc='TQ1\n'+btoa(bin).replace(/.{64}/g,'$&\n');
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([enc],{type:'text/plain'}));a.download='response_'+name.replace(/\W+/g,'_')+'.txt';a.click()}
+start();
+</script></body></html>
